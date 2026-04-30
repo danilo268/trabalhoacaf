@@ -1,0 +1,484 @@
+<!doctype html>
+
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ACAF - Centro de Treinamento</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              acafGreen: "#00ff7f",
+              acafDark: "#111827",
+              acafCard: "#1f2937",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      /* Custom Scrollbar for better UI */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #111827;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #374151;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #4b5563;
+      }
+
+      .checkbox-custom:checked + div {
+        background-color: #00ff7f;
+        border-color: #00ff7f;
+      }
+      .checkbox-custom:checked + div svg {
+        display: block;
+      }
+      .transition-all-custom {
+        transition: all 0.3s ease;
+      }
+    </style>
+  </head>
+  <body class="bg-acafDark text-white min-h-screen font-sans pb-12">
+    <div class="max-w-md mx-auto pt-8 px-4">
+      <!-- Header -->
+      <div class="text-center mb-8 border-b border-gray-800 pb-6">
+        <h1 class="text-4xl font-bold text-acafGreen mb-1 tracking-wider">
+          ACAF
+        </h1>
+        <p class="text-xs text-gray-400 uppercase tracking-widest">
+          Centro de Treinamento Adaptativo
+        </p>
+      </div>
+
+      <!-- Form Section -->
+      <div class="space-y-4 mb-6">
+        <div>
+          <input
+            type="text"
+            id="nome"
+            placeholder="Seu nome"
+            class="w-full bg-acafCard text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-acafGreen transition-colors"
+          />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <input
+            type="number"
+            id="peso"
+            placeholder="Peso Atual (kg)"
+            class="w-full bg-acafCard text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-acafGreen transition-colors"
+          />
+          <input
+            type="number"
+            step="0.01"
+            id="altura"
+            placeholder="Altura (ex: 1.85)"
+            class="w-full bg-acafCard text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-acafGreen transition-colors"
+          />
+        </div>
+        <div>
+          <input
+            type="number"
+            id="metaPeso"
+            placeholder="Meta de Peso (kg) - Opcional"
+            class="w-full bg-acafCard text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-acafGreen transition-colors"
+          />
+        </div>
+
+        <button
+          onclick="gerarEvolucao()"
+          class="w-full bg-acafGreen hover:bg-green-400 text-black font-bold py-4 rounded-lg uppercase tracking-wide transition-all shadow-[0_0_15px_rgba(0,255,127,0.3)] hover:shadow-[0_0_25px_rgba(0,255,127,0.5)] mt-4"
+        >
+          Gerar Evolução Completa
+        </button>
+      </div>
+
+      <!-- Error Message -->
+      <div
+        id="erroMsg"
+        class="hidden bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg mb-6 text-sm text-center"
+      >
+        Por favor, preencha peso e altura corretamente.
+      </div>
+
+      <!-- Results Section (Hidden by default) -->
+      <div
+        id="resultados"
+        class="hidden space-y-6 opacity-0 transition-opacity duration-500"
+      >
+        <!-- Dashboard Grid -->
+        <div class="grid grid-cols-2 gap-4">
+          <div
+            class="bg-acafCard border border-gray-800 rounded-xl p-4 text-center shadow-lg"
+          >
+            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">
+              Seu IMC
+            </p>
+            <p id="resImc" class="text-2xl font-bold text-acafGreen">0.0</p>
+          </div>
+          <div
+            class="bg-acafCard border border-gray-800 rounded-xl p-4 text-center shadow-lg"
+          >
+            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">
+              Meta Água
+            </p>
+            <p id="resAgua" class="text-2xl font-bold text-acafGreen">0L</p>
+          </div>
+          <div
+            class="bg-acafCard border border-gray-800 rounded-xl p-4 text-center shadow-lg"
+          >
+            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">
+              Proteína
+            </p>
+            <p id="resProt" class="text-2xl font-bold text-acafGreen">0g</p>
+          </div>
+          <div
+            class="bg-acafCard border border-gray-800 rounded-xl p-4 text-center shadow-lg"
+          >
+            <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">
+              Status
+            </p>
+            <p id="resStatus" class="text-lg font-bold text-acafGreen">
+              Normal
+            </p>
+          </div>
+        </div>
+
+        <!-- Meta de Peso Progress (New Feature) -->
+        <div
+          id="containerMetaPeso"
+          class="hidden bg-acafCard border border-gray-800 rounded-xl p-5 shadow-lg"
+        >
+          <div class="flex justify-between items-end mb-2">
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wider">
+                Progresso da Meta
+              </p>
+              <p class="text-sm font-semibold mt-1">
+                Faltam <span id="pesoFaltante" class="text-acafGreen">0kg</span>
+              </p>
+            </div>
+            <div class="text-right">
+              <p id="porcentagemMeta" class="text-2xl font-bold text-acafGreen">
+                0%
+              </p>
+            </div>
+          </div>
+          <div
+            class="w-full bg-gray-700 rounded-full h-2.5 mt-2 overflow-hidden"
+          >
+            <div
+              id="barraMeta"
+              class="bg-acafGreen h-2.5 rounded-full transition-all duration-1000 ease-out"
+              style="width: 0%"
+            ></div>
+          </div>
+          <p
+            id="msgMotivacional"
+            class="text-xs text-center text-gray-300 mt-3 italic"
+          ></p>
+        </div>
+
+        <!-- Tip Card -->
+        <div
+          class="bg-gray-800 border-l-4 border-indigo-500 rounded-r-xl p-4 shadow-lg"
+        >
+          <p class="text-sm text-gray-300">
+            <strong class="text-white">Dica ACAF:</strong> Para melhorar sua
+            saúde, foque em 80% comida limpa e 20% flexível. O descanso é tão
+            importante quanto o treino. Durma 7h+ por noite!
+          </p>
+        </div>
+
+        <!-- Workout Section -->
+        <div id="treinosContainer" class="space-y-4">
+          <!-- Treinos will be injected here via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SVGs for Icons (Replacing broken images) -->
+    <script>
+      // Imagens reais garantidas da internet (Alta velocidade e sem bloqueios)
+      // Removido o bloqueador de erro que estava impedindo as imagens de aparecer na sua tela!
+      const icons = {
+        peito: `<img src="https://images.pexels.com/photos/416809/pexels-photo-416809.jpeg?auto=compress&cs=tinysrgb&w=150" alt="Treino de Peito" class="w-full h-full object-cover rounded-lg">`,
+        braco: `<img src="https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=150" alt="Treino de Braço" class="w-full h-full object-cover rounded-lg">`,
+        costas: `<img src="https://images.pexels.com/photos/1431282/pexels-photo-1431282.jpeg?auto=compress&cs=tinysrgb&w=150" alt="Treino de Costas" class="w-full h-full object-cover rounded-lg">`,
+        perna: `<img src="https://images.pexels.com/photos/414029/pexels-photo-414029.jpeg?auto=compress&cs=tinysrgb&w=150" alt="Treino de Perna" class="w-full h-full object-cover rounded-lg">`,
+        ombro: `<img src="https://images.pexels.com/photos/347135/pexels-photo-347135.jpeg?auto=compress&cs=tinysrgb&w=150" alt="Treino de Ombro" class="w-full h-full object-cover rounded-lg">`,
+      };
+
+      const treinos = [
+        {
+          dia: "SEGUNDA - PEITO E TRÍCEPS",
+          cor: "bg-teal-900/40",
+          exercicios: [
+            {
+              id: "ex1",
+              nome: "Supino Reto",
+              rep: "4 x 10 repetições",
+              icone: icons.peito,
+            },
+            {
+              id: "ex2",
+              nome: "Tríceps Corda",
+              rep: "3 x 15 repetições",
+              icone: icons.braco,
+            },
+          ],
+        },
+        {
+          dia: "TERÇA - COSTAS E BÍCEPS",
+          cor: "bg-teal-900/40",
+          exercicios: [
+            {
+              id: "ex3",
+              nome: "Remada Curvada",
+              rep: "4 x 12 repetições",
+              icone: icons.costas,
+            },
+            {
+              id: "ex4",
+              nome: "Rosca Martelo",
+              rep: "3 x 12 repetições",
+              icone: icons.braco,
+            },
+          ],
+        },
+        {
+          dia: "QUARTA - PERNAS COMPLETAS",
+          cor: "bg-teal-900/40",
+          exercicios: [
+            {
+              id: "ex5",
+              nome: "Agachamento Livre",
+              rep: "4 x 10 repetições",
+              icone: icons.perna,
+            },
+            {
+              id: "ex6",
+              nome: "Leg Press 45º",
+              rep: "4 x 12 repetições",
+              icone: icons.perna,
+            },
+          ],
+        },
+      ];
+
+      let totalExerciciosAtuais = 0;
+      let exerciciosConcluidos = 0;
+
+      function gerarEvolucao() {
+        const pesoInput = document
+          .getElementById("peso")
+          .value.replace(",", ".");
+        const alturaInput = document
+          .getElementById("altura")
+          .value.replace(",", ".");
+        const metaPesoInput = document
+          .getElementById("metaPeso")
+          .value.replace(",", ".");
+        const erroMsg = document.getElementById("erroMsg");
+        const resultados = document.getElementById("resultados");
+
+        const peso = parseFloat(pesoInput);
+        let altura = parseFloat(alturaInput);
+        const metaPeso = parseFloat(metaPesoInput);
+
+        // Validação simples
+        if (isNaN(peso) || isNaN(altura) || peso <= 0 || altura <= 0) {
+          erroMsg.classList.remove("hidden");
+          resultados.classList.add("hidden");
+          resultados.classList.remove("opacity-100");
+          return;
+        }
+        erroMsg.classList.add("hidden");
+
+        // Ajustar altura caso o usuário digite 185 em vez de 1.85
+        if (altura > 3) altura = altura / 100;
+
+        // Cálculos
+        const imc = peso / (altura * altura);
+        const agua = (peso * 35) / 1000; // 35ml por kg
+        const proteina = peso * 2; // 2g por kg
+
+        let status = "";
+        let statusColor = "text-acafGreen";
+        if (imc < 18.5) {
+          status = "Abaixo do Peso";
+          statusColor = "text-yellow-400";
+        } else if (imc < 24.9) {
+          status = "Peso Normal";
+        } else if (imc < 29.9) {
+          status = "Sobrepeso";
+          statusColor = "text-orange-400";
+        } else {
+          status = "Obesidade";
+          statusColor = "text-red-500";
+        }
+
+        // Atualizar UI Dashboard
+        document.getElementById("resImc").innerText = imc.toFixed(1);
+        document.getElementById("resAgua").innerText = agua.toFixed(1) + "L";
+        document.getElementById("resProt").innerText =
+          Math.round(proteina) + "g";
+
+        const statusEl = document.getElementById("resStatus");
+        statusEl.innerText = status;
+        statusEl.className = `text-lg font-bold ${statusColor}`;
+
+        // Lógica de Meta de Peso
+        const containerMeta = document.getElementById("containerMetaPeso");
+        if (!isNaN(metaPeso) && metaPeso > 0) {
+          containerMeta.classList.remove("hidden");
+
+          // Cálculo base de progresso (exemplo genérico: assumindo que a pessoa quer perder peso)
+          // Se o peso atual é maior que a meta, estamos perdendo peso.
+          let diferenca = Math.abs(peso - metaPeso);
+          document.getElementById("pesoFaltante").innerText =
+            diferenca.toFixed(1) + "kg";
+
+          // Simulação de % atingida (isso requereria o peso inicial real, mas faremos uma estimativa visual)
+          // Vamos supor que a pessoa começou com 10% a mais do que a diferença atual para dar um visual legal
+          // Em um app real, você salvaria o "Peso Inicial".
+          let porcentagem = 0;
+          if (peso <= metaPeso && pesoInput > metaPesoInput) {
+            porcentagem = 100;
+            document.getElementById("msgMotivacional").innerText =
+              "🎉 OBJETIVO ALCANÇADO! Você é incrível!";
+          } else {
+            // Lógica ilustrativa: se faltam menos de 5kg, a barra fica bem cheia
+            porcentagem = Math.max(10, 100 - diferenca * 5);
+            if (porcentagem > 100) porcentagem = 100;
+
+            if (porcentagem > 80)
+              document.getElementById("msgMotivacional").innerText =
+                "Falta muito pouco! Continue firme!";
+            else
+              document.getElementById("msgMotivacional").innerText =
+                "O processo é contínuo. Não desista!";
+          }
+
+          document.getElementById("porcentagemMeta").innerText =
+            Math.round(porcentagem) + "%";
+          setTimeout(() => {
+            document.getElementById("barraMeta").style.width =
+              porcentagem + "%";
+          }, 100);
+        } else {
+          containerMeta.classList.add("hidden");
+        }
+
+        // Gerar Treinos
+        renderizarTreinos();
+
+        // Mostrar resultados com animação
+        resultados.classList.remove("hidden");
+        setTimeout(() => {
+          resultados.classList.add("opacity-100");
+        }, 50);
+      }
+
+      function renderizarTreinos() {
+        const container = document.getElementById("treinosContainer");
+        container.innerHTML = "";
+        totalExerciciosAtuais = 0;
+        exerciciosConcluidos = 0;
+
+        treinos.forEach((treino, indexDia) => {
+          let htmlExercicios = "";
+
+          treino.exercicios.forEach((ex) => {
+            totalExerciciosAtuais++;
+            htmlExercicios += `
+                        <label class="flex items-center p-3 hover:bg-gray-700/50 rounded-lg cursor-pointer transition-all-custom border border-transparent hover:border-gray-600 group">
+                            <div class="relative flex items-center justify-center">
+                                <input type="checkbox" class="checkbox-custom opacity-0 absolute h-0 w-0" onchange="toggleExercicio(this)">
+                                <div class="w-6 h-6 border-2 border-gray-500 rounded-md flex items-center justify-center transition-colors mr-4 group-hover:border-acafGreen">
+                                    <svg class="w-4 h-4 text-black hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                </div>
+                            </div>
+                            
+                            <div class="w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center mr-4 border border-gray-700 shadow-inner text-acafGreen">
+                                ${ex.icone}
+                            </div>
+                            
+                            <div class="flex-1">
+                                <h4 class="font-bold text-white text-md transition-colors group-hover:text-acafGreen">${ex.nome}</h4>
+                                <p class="text-sm text-gray-400">${ex.rep}</p>
+                            </div>
+                        </label>
+                    `;
+          });
+
+          const htmlDia = `
+                    <div class="bg-acafCard border border-gray-800 rounded-xl overflow-hidden shadow-lg mb-6">
+                        <div class="${treino.cor} px-4 py-3 border-b border-gray-800 flex justify-between items-center">
+                            <h3 class="font-bold text-acafGreen text-sm tracking-wider">${treino.dia}</h3>
+                            <span class="text-xs text-gray-400" id="progressoDia${indexDia}">0/${treino.exercicios.length}</span>
+                        </div>
+                        <div class="p-2 flex flex-col gap-1" id="listaDia${indexDia}" data-total="${treino.exercicios.length}" data-feitos="0">
+                            ${htmlExercicios}
+                        </div>
+                        <!-- Barra de progresso do dia -->
+                        <div class="h-1 w-full bg-gray-800">
+                            <div id="barraDia${indexDia}" class="h-1 bg-acafGreen w-0 transition-all duration-500"></div>
+                        </div>
+                    </div>
+                `;
+          container.innerHTML += htmlDia;
+        });
+      }
+
+      function toggleExercicio(checkbox) {
+        // Lógica visual do texto (riscar quando feito)
+        const label = checkbox.closest("label");
+        const titulo = label.querySelector("h4");
+        const containerLista = checkbox.closest('[id^="listaDia"]');
+        const idDia = containerLista.id.replace("listaDia", "");
+
+        let totalDia = parseInt(containerLista.getAttribute("data-total"));
+        let feitosDia = parseInt(containerLista.getAttribute("data-feitos"));
+
+        if (checkbox.checked) {
+          titulo.classList.add("line-through", "text-gray-500");
+          titulo.classList.remove("group-hover:text-acafGreen", "text-white");
+          feitosDia++;
+        } else {
+          titulo.classList.remove("line-through", "text-gray-500");
+          titulo.classList.add("group-hover:text-acafGreen", "text-white");
+          feitosDia--;
+        }
+
+        // Atualiza contadores do dia
+        containerLista.setAttribute("data-feitos", feitosDia);
+        document.getElementById(`progressoDia${idDia}`).innerText =
+          `${feitosDia}/${totalDia}`;
+
+        // Atualiza barra do dia
+        const porcentagemDia = (feitosDia / totalDia) * 100;
+        document.getElementById(`barraDia${idDia}`).style.width =
+          `${porcentagemDia}%`;
+
+        // Verifica se bateu a meta do dia
+        if (feitosDia === totalDia) {
+          setTimeout(() => {
+            alert(
+              `🎉 Parabéns! Meta do treino batida! Você concluiu todos os exercícios desta lista.`,
+            );
+          }, 300);
+        }
+      }
+    </script>
+  </body>
+</html>

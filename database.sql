@@ -1,0 +1,15 @@
+CREATE DATABASE acaf;
+USE acaf;
+
+CREATE TABLE usuarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(100),
+  senha VARCHAR(100)
+);
+
+CREATE TABLE evolucao (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT,
+  peso FLOAT,
+  data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
