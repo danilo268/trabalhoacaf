@@ -1,15 +1,14 @@
-CREATE DATABASE acaf;
-USE acaf;
+export default function handler(req, res) {
+  global.usuarios = global.usuarios || [];
 
-CREATE TABLE usuarios (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  email VARCHAR(100),
-  senha VARCHAR(100)
-);
+  if (req.method === "POST" && req.url.endsWith("/salvar")) {
+    global.usuarios.push(req.body);
+    return res.status(200).json({ msg: "salvo" });
+  }
 
-CREATE TABLE evolucao (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  usuario_id INT,
-  peso FLOAT,
-  data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+  if (req.method === "GET" && req.url.endsWith("/dados")) {
+    return res.status(200).json(global.usuarios);
+  }
+
+  return res.status(200).json({ msg: "API ACAF funcionando 🚀" });
+}
